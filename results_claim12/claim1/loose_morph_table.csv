@@ -1,0 +1,5 @@
+model,trained@5,random@5,nibble@5,trained_clean(run+tion),nibble_clean(run+tion)
+gpt2,0.74,1.0,0.94,0.56,0.9
+HuggingFaceTB/SmolLM2-135M,0.67,1.0,0.93,0.54,0.9
+EleutherAI/pythia-160m,0.73,1.0,0.93,0.6,0.88
+Qwen/Qwen2.5-0.5B,0.52,1.0,0.9,0.22,0.84

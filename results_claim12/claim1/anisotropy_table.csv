@@ -1,0 +1,5 @@
+model,||mu||,raw_pairwise_cos
+gpt2,2.05,0.268
+HuggingFaceTB/SmolLM2-135M,2.18,0.447
+EleutherAI/pythia-160m,0.05,0.004
+Qwen/Qwen2.5-0.5B,0.18,0.154

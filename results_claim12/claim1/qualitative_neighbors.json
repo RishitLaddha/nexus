@@ -1,0 +1,186 @@
+{
+  "gpt2": {
+    "trained": {
+      "run": [
+        "Ġrun",
+        "runs",
+        "Run",
+        "ĠRun",
+        "Ġruns"
+      ],
+      "nation": [
+        "Nation",
+        "Ġnation",
+        "country",
+        "ĠNation",
+        "national"
+      ]
+    },
+    "nibble": {
+      "run": [
+        "runs",
+        "ru",
+        "runner",
+        "rub",
+        "rug"
+      ],
+      "nation": [
+        "national",
+        "Nation",
+        "vation",
+        "lation",
+        "cation"
+      ]
+    },
+    "per_family_trained": {
+      "run": 0.6,
+      "compute": 0.8800000000000001,
+      "magnet": 0.96,
+      "tion": 0.52
+    },
+    "per_family_nibble": {
+      "run": 0.9199999999999999,
+      "compute": 0.96,
+      "magnet": 1.0,
+      "tion": 0.8800000000000001
+    }
+  },
+  "HuggingFaceTB/SmolLM2-135M": {
+    "trained": {
+      "run": [
+        "Run",
+        "Ġrun",
+        "ĠRun",
+        "Ġruns",
+        "running"
+      ],
+      "nation": [
+        "Ġnation",
+        "ĠNation",
+        "Ġnations",
+        "country",
+        "national"
+      ]
+    },
+    "nibble": {
+      "run": [
+        "runk",
+        "rund",
+        "runc",
+        "runs",
+        "runt"
+      ],
+      "nation": [
+        "national",
+        "vation",
+        "lation",
+        "uation",
+        "cation"
+      ]
+    },
+    "per_family_trained": {
+      "run": 0.5599999999999999,
+      "compute": 0.6799999999999999,
+      "magnet": 0.9199999999999999,
+      "tion": 0.52
+    },
+    "per_family_nibble": {
+      "run": 0.9199999999999999,
+      "compute": 0.9199999999999999,
+      "magnet": 1.0,
+      "tion": 0.8800000000000001
+    }
+  },
+  "EleutherAI/pythia-160m": {
+    "trained": {
+      "run": [
+        "Ġrun",
+        "Run",
+        "Ġruns",
+        "ĠRun",
+        "Ġran"
+      ],
+      "nation": [
+        "ation",
+        "n",
+        "Ġn",
+        "ations",
+        "N"
+      ]
+    },
+    "nibble": {
+      "run": [
+        "ru",
+        "runner",
+        "ruz",
+        "rub",
+        "rug"
+      ],
+      "nation": [
+        "national",
+        "vation",
+        "lation",
+        "uation",
+        "cation"
+      ]
+    },
+    "per_family_trained": {
+      "run": 0.64,
+      "compute": 0.8,
+      "magnet": 0.9199999999999999,
+      "tion": 0.5599999999999999
+    },
+    "per_family_nibble": {
+      "run": 0.9199999999999999,
+      "compute": 0.96,
+      "magnet": 1.0,
+      "tion": 0.8400000000000001
+    }
+  },
+  "Qwen/Qwen2.5-0.5B": {
+    "trained": {
+      "run": [
+        "Ġrun",
+        "Run",
+        "_run",
+        "ĠRun",
+        ".run"
+      ],
+      "nation": [
+        "Ġnation",
+        "Nation",
+        "ĠNation",
+        "national",
+        "Ġnations"
+      ]
+    },
+    "nibble": {
+      "run": [
+        "runs",
+        "ru",
+        "runner",
+        "ruz",
+        "ruk"
+      ],
+      "nation": [
+        "national",
+        "Nation",
+        "vation",
+        "lation",
+        "ration"
+      ]
+    },
+    "per_family_trained": {
+      "run": 0.2,
+      "compute": 0.64,
+      "magnet": 1.0,
+      "tion": 0.24000000000000005
+    },
+    "per_family_nibble": {
+      "run": 0.8800000000000001,
+      "compute": 0.9199999999999999,
+      "magnet": 1.0,
+      "tion": 0.8
+    }
+  }
+}

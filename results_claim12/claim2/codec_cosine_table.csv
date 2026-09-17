@@ -1,0 +1,8 @@
+probe,variant,type,measured_cos,closed_form_(L-k)/L
+mistake,mistkae,transposition (same L),0.714,0.714
+receive,recieve,transposition (same L),0.714,0.714
+separate,seperate,1-byte substitution,0.875,0.875
+realize,realise,1-byte substitution,0.857,0.857
+color,colour,insertion (length change),0.73,
+compute,commute,byte-similar non-relative,0.857,0.857
+nation,notion,byte-similar non-relative,0.833,0.833

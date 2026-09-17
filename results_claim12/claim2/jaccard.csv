@@ -1,0 +1,10 @@
+probe,mean_jaccard_top5
+run,0.44
+compute,0.43
+nation,0.71
+magnet,0.59
+computer,0.37
+running,0.56
+station,0.58
+magnetic,0.29
+MEAN,0.5

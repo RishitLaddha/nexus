@@ -17,7 +17,123 @@ proposal. Every script is standalone, CLI-driven, and writes its artifacts to
 Claims 1 and 2 need no training and no GPU: run them first, today, on free
 Colab CPU. Claims 4 and 5 reuse the claim 3 checkpoints.
 
-## Design choices and why (defend these in your report)
+## 4. Claim 1 — Trained Embedding Tables May Not Encode What Is Assumed
+
+
+
+### 4.1 Hypothesis under test
+
+Does a trained input-embedding table organize tokens primarily by **word relationships** (the implicit justification for spending trainable parameters on it), or by something narrower — such as surface typography?
+
+### 4.2 Method
+
+Four public models were probed: `gpt2` (vocab 50,257, d=768, tied), `SmolLM2-135M` (49,152, 576, tied), `Pythia-160M` (50,277, 768, untied), `Qwen2.5-0.5B` (151,665, 896). For each model, three retrieval spaces were built over the identical vocabulary: the model's trained table, a random Gaussian table of matching shape, and the NibbleNet codec (`dp = 16`) over the same vocabulary. Twenty probes across four morphological families (*run, compute, magnet, tion*) were queried by mean-centered cosine, top-5, with self-retrieval excluded.
+
+**Metric — loose morph@5:** the fraction of a probe's top-5 retrievals whose *canonical form* (whitespace markers stripped, edge punctuation stripped, case-folded) differs from the probe's own canonical form. A retrieval of the same word in a different case or with a leading space scores 0 (no escape from typographic clustering); anything else scores 1.
+
+### 4.3 Results
+
+**Loose morph@5, all four probe families:**
+
+
+| Model        | Trained | Random | NibbleNet codec |
+| ------------ | ------- | ------ | --------------- |
+| gpt2         | 0.74    | 1.00   | 0.94            |
+| SmolLM2-135M | 0.67    | 1.00   | 0.93            |
+| Pythia-160M  | 0.73    | 1.00   | 0.93            |
+| Qwen2.5-0.5B | 0.52    | 1.00   | 0.90            |
+
+
+**Restricted to single-token probe families only** (*run*, *tion* — removing a multi-token averaging artifact present in *magnet* and *compute*):
+
+
+| Model        | Trained (clean subset) | NibbleNet codec (clean subset) |
+| ------------ | ---------------------- | ------------------------------ |
+| gpt2         | 0.56                   | 0.90                           |
+| SmolLM2-135M | 0.54                   | 0.90                           |
+| Pythia-160M  | 0.60                   | 0.88                           |
+| Qwen2.5-0.5B | 0.22                   | 0.84                           |
+
+
+**Qualitative neighborhoods for the probe *run*:** gpt2's trained table returns `Ġrun, runs, Run, ĠRun, Ġruns` — five surface variants of the same word. Qwen's trained table returns `Ġrun, Run, _run, ĠRun, .run` — again, five surface variants and nothing else. The codec, on the same vocabularies, returns byte-similar but distinct strings: `runs, ru, runner, rub, rug` (gpt2); `runk, rund, runc, runs, runt` (SmolLM2).
+
+**Anisotropy** (mean-vector norm / raw mean pairwise cosine): gpt2 2.05 / 0.268; SmolLM2 2.18 / 0.447; Pythia 0.05 / 0.004; Qwen 0.18 / 0.154. The two weight-tied tables carry a large shared direction; the untied table (Pythia) is nearly isotropic.
+
+### 4.4 Interpretation
+
+On every model tested, the dominant organizing structure of a trained embedding table is **typographic identity**, not word relationships. On the clean, single-token probe subset, roughly half of a trained table's nearest neighbors are the probe word again in a different case or with different leading whitespace; for Qwen2.5-0.5B this rises to about four in five. The deterministic codec escapes this clustering substantially (0.84–0.94 vs. 0.22–0.60). This finding is the empirical premise the rest of the investigation rests on: if the thing a learned table is assumed to buy (semantic organization) is largely typographic clustering instead, a fixed rule that avoids that clustering is a legitimate candidate to test.
+
+### 4.5 Limitations
+
+Four models only, all 124M–500M parameters; nothing larger was downloadable within RAM/gating constraints. The loose metric measures *escape from typographic clustering only* — it does not check whether the escaped neighbors are useful relatives (the codec's `rub`/`rug` count identically to a hypothetically better `runner`/`running`). Multi-token probes inflate the trained-table score, which is why the single-token subset is the primary number. Twenty probes, English only.
+
+---
+
+
+
+## 5. Claim 2 — A Fixed Byte-Position Rule Produces Its Own Kind of Structure
+
+
+
+### 5.1 Hypothesis under test
+
+Do the two properties derived on paper for the codec — unit norm, and the closed-form same-length cosine `(L−k)/L` — actually hold on real tokenizer vocabularies, and what does the encoding cluster together in practice?
+
+### 5.2 Method
+
+The codec was implemented exactly as defined (one nonzero entry per byte at index `byte × dp + position`, magnitude `1/√L`, `D = 256 × dp`) and subjected to seven checks with no training involved: unit-norm verification across the full GPT-2 vocabulary at `dp = 16`; closed-form cosine on seven hand-picked word pairs; cosine between `run` and `RUN`; top-10 codec neighbors for eight probes; byte-length coverage of four vocabularies at `dp = 16, 32, 64`; single-vector retrieval of out-of-vocabulary strings; cross-tokenizer Jaccard overlap of top-5 neighborhoods across four independently built tokenizers.
+
+### 5.3 Results
+
+**Unit norm** over all 50,257 GPT-2 tokens: min `0.99999994`, max `1.00000012` — holds for every token to numerical precision.
+
+**Closed-form cosine**, exact on every same-length pair tested:
+
+
+| Pair                | Edit type               | Measured | (L−k)/L |
+| ------------------- | ----------------------- | -------- | ------- |
+| mistake / mistkae   | transposition           | 0.714    | 0.714   |
+| receive / recieve   | transposition           | 0.714    | 0.714   |
+| separate / seperate | substitution            | 0.875    | 0.875   |
+| realize / realise   | substitution            | 0.857    | 0.857   |
+| color / colour      | insertion               | 0.730    | n/a     |
+| compute / commute   | unrelated, byte-similar | 0.857    | 0.857   |
+| nation / notion     | unrelated, byte-similar | 0.833    | 0.833   |
+
+
+`cos(run, RUN) = 0.0` exactly (case is encoded as a distinct byte value at every position, so the two strings share no active codec dimensions).
+
+**Neighborhoods (GPT-2 vocabulary):** `run → runs, ru, runner, rub, rug, rum`; `compute → computer, Computer, comp, compl, com, component`; `nation → national, Nation, vation, lation, cation, uation`; `running → Running, funding, ounding, ouncing, ranking, ranging`; `magnetic → mag, kinetic, Genetic, genetic, market, Genetics`.
+
+**Byte-length coverage** (fraction of vocabulary tokens at most `dp` bytes long):
+
+
+| Vocabulary | dp = 16 | dp = 32 | dp = 64 |
+| ---------- | ------- | ------- | ------- |
+| gpt2       | 99.86%  | 99.97%  | 99.99%  |
+| SmolLM2    | 99.68%  | 99.90%  | 99.99%  |
+| Pythia     | 99.46%  | 99.74%  | 99.92%  |
+| Qwen       | 98.73%  | 99.84%  | 99.92%  |
+
+
+**Out-of-vocabulary single-vector retrieval:** `asynchronously → synchron, synchronized, synchronization, Async, sync`; `deserialization → specialization, initialization`; `kubernetes → Internet, internet, uber, Tube`; `shoggoth → thought, show, shop`; `nibbletron → inflation, isolation, abolition`; `tiramisu → thritis, tera, ti`.
+
+**Cross-tokenizer Jaccard** (top-5, mean over six tokenizer pairs): `nation` 0.71, `magnet` 0.59, `station` 0.58, `running` 0.56, `run` 0.44, `compute` 0.43, `computer` 0.37, `magnetic` 0.29 — mean 0.50.
+
+### 5.4 Interpretation
+
+Both on-paper properties hold **exactly** on real vocabularies. The encoding's organizing principle is byte-level locality: two strings are close if and only if they share bytes at the same positions. This produces predictable behavior in both directions — a single-character typo gets a cosine of 0.86–0.88 with its correct spelling, case variants get cosine exactly 0, and neighborhoods are roughly half-shared across four independently built tokenizers (mean Jaccard 0.50) — but also predictable costs: unrelated words at small edit distance score as similar as genuine typos (`compute`/`commute` = 0.857), rhymes cluster with unrelated inflections (`running → funding, ranking`), and insertions are penalized more heavily than substitutions (`color`/`colour` = 0.730). Coverage at `dp = 16` (`D = 4096`) exceeds 98.7% on every vocabulary tested, which is the basis for using `dp = 16` in Claim 3.
+
+### 5.5 Limitations
+
+English-centric tokenizers and English probes only; no non-Latin, emoji, or combining-character strings were tested. The closed-form check is exact by construction for same-length pairs; there is no equivalent formula for insertions, and only one measured example is given. Neighborhood quality is judged by inspection, not by an external gold standard. OOV retrieval is a capability demonstration on seven strings, not a systematic evaluation. None of this establishes whether the encoding *helps* a language model — that is the subject of Claim 3.
+
+---
+
+
+
+
+## Design choices and why 
 
 **Claim 1 models: gpt2, SmolLM2-135M, pythia-160m, Qwen2.5-0.5B.**
 The paper used six models up to 671B; downloading DeepSeek-V3's embedding
@@ -145,9 +261,3 @@ claim4_robustness.py
 claim5_layered_probe.py
 ```
 
-## If a claim-3 run is too slow on your session
-
-Knobs, in order of preference: `--steps 2000` (still shows the gap
-trajectory), `--micro_bs 8 --grad_accum 8` (same tokens/step, less VRAM),
-`--n_embd 256 --n_head 4` (smaller model, faster, still input-dominated).
-Keep BOTH arms on identical settings, always: the comparison is the result.
